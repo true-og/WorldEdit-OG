@@ -446,6 +446,17 @@ public class GeneralCommands {
     }
 
     @Command(
+        name = "placement",
+        aliases = {"/placement"},
+        desc = "Select which placement to use"
+    )
+    public void placement(Actor actor, LocalSession session,
+                          @Arg(desc = "Which placement type to use")
+                          PlacementType placementType) {
+        placementImpl(actor, session, new Placement(placementType));
+    }
+
+    @Command(
         name = "searchitem",
         aliases = {"/searchitem", "/l", "/search"},
         desc = "Search for an item"
