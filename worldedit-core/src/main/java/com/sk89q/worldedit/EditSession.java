@@ -2362,12 +2362,13 @@ public class EditSession implements Extent, AutoCloseable {
         final DoubleArrayList<BlockVector3, BaseBlock> queue = new DoubleArrayList<>(false);
 
         for (BlockVector3 position : region) {
-            // offset, scale
+            // transform
             final Vector3 scaled = position.toVector3().subtract(zero).divide(unit);
 
-            // transform
+            // deform
             expression.evaluate(new double[]{scaled.getX(), scaled.getY(), scaled.getZ()}, timeout);
 
+            // untransform, round-nearest
             final BlockVector3 sourcePosition = environment.toWorld(x.getValue(), y.getValue(), z.getValue());
 
             // read block from world
