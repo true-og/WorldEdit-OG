@@ -46,6 +46,7 @@ class LocalSessionTest extends BaseWorldEditTest {
         doReturn(world).when(player).getWorld();
     }
 
+    @SuppressWarnings("deprecation")
     @Test
     void testPlacementSet() {
         session.setPlaceAtPos1(true);
@@ -58,6 +59,7 @@ class LocalSessionTest extends BaseWorldEditTest {
         assertTrue(session.isPlaceAtPos1());
     }
 
+    @SuppressWarnings("deprecation")
     @Test
     void testPlacementToggle() {
         // Start with pos1 and verify that toggling back and forth works
@@ -81,6 +83,7 @@ class LocalSessionTest extends BaseWorldEditTest {
         assertFalse(session.isPlaceAtPos1());
     }
 
+    @SuppressWarnings("deprecation")
     @Test
     void testPlacementPos1() throws Exception {
         final ActorSelectorLimits limits = ActorSelectorLimits.forActor(player);
@@ -103,6 +106,7 @@ class LocalSessionTest extends BaseWorldEditTest {
         assertEquals(pos1, session.getPlacementPosition(player));
     }
 
+    @SuppressWarnings("deprecation")
     @Test
     void testPlacementPlayer() throws Exception {
         final BlockVector3 playerPosition = BlockVector3.at(42,1337,23);
