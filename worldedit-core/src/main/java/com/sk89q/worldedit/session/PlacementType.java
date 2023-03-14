@@ -50,6 +50,20 @@ public enum PlacementType {
         public BlockVector3 getPlacementPosition(RegionSelector selector, Actor actor) throws IncompleteRegionException {
             return selector.getPrimaryPosition();
         }
+    },
+
+    MIN("worldedit.toggleplace.min") {
+        @Override
+        public BlockVector3 getPlacementPosition(RegionSelector selector, Actor actor) throws IncompleteRegionException {
+            return selector.getRegion().getMinimumPoint();
+        }
+    },
+
+    MAX("worldedit.toggleplace.max") {
+        @Override
+        public BlockVector3 getPlacementPosition(RegionSelector selector, Actor actor) throws IncompleteRegionException {
+            return selector.getRegion().getMaximumPoint();
+        }
     };
 
     private final String translationKey;
