@@ -76,6 +76,8 @@
     "worldedit.toggleplace.min-offset": "Now placing at an offset of ({0}, {1}, {2}) from the minimum of the current selection.",
     "worldedit.toggleplace.max": "Now placing at the maximum of the current selection.",
     "worldedit.toggleplace.max-offset": "Now placing at an offset of ({0}, {1}, {2}) from the maximum of the current selection.",
+    "worldedit.toggleplace.world": "Now placing at world origin.",
+    "worldedit.toggleplace.world-offset": "Now placing at ({0}, {1}, {2}).",
     "worldedit.toggleplace.not-locatable": "Cannot toggle placing in this context.",
     "worldedit.searchitem.too-short": "Enter a longer search string (len > 2).",
     "worldedit.searchitem.either-b-or-i": "You cannot use both the 'b' and 'i' flags simultaneously.",

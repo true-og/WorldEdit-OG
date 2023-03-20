@@ -28,6 +28,13 @@ import com.sk89q.worldedit.regions.RegionSelector;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public enum PlacementType {
+    WORLD("worldedit.toggleplace.world", "worldedit.toggleplace.world-offset") {
+        @Override
+        public BlockVector3 getPlacementPosition(RegionSelector selector, Actor actor) throws IncompleteRegionException {
+            return BlockVector3.ZERO;
+        }
+    },
+
     PLAYER("worldedit.toggleplace.player", "worldedit.toggleplace.player-offset") {
         @Override
         public BlockVector3 getPlacementPosition(RegionSelector selector, Actor actor) throws IncompleteRegionException
