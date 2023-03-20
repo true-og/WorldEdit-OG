@@ -38,6 +38,7 @@ import com.sk89q.worldedit.function.block.ApplySideEffect;
 import com.sk89q.worldedit.function.mask.Mask;
 import com.sk89q.worldedit.function.operation.Operations;
 import com.sk89q.worldedit.function.visitor.RegionVisitor;
+import com.sk89q.worldedit.internal.annotation.Offset;
 import com.sk89q.worldedit.internal.command.CommandRegistrationHandler;
 import com.sk89q.worldedit.internal.command.CommandUtil;
 import com.sk89q.worldedit.internal.cui.ServerCUIHandler;
@@ -439,9 +440,9 @@ public class GeneralCommands {
     )
     public void togglePlace(Actor actor, LocalSession session) {
         if (session.getPlacement().getPlacementType() == PlacementType.POS1) {
-            placementImpl(actor, session, new Placement(PlacementType.PLAYER));
+            placementImpl(actor, session, new Placement(PlacementType.PLAYER, BlockVector3.ZERO));
         } else {
-            placementImpl(actor, session, new Placement(PlacementType.POS1));
+            placementImpl(actor, session, new Placement(PlacementType.POS1, BlockVector3.ZERO));
         }
     }
 
@@ -452,8 +453,14 @@ public class GeneralCommands {
     )
     public void placement(Actor actor, LocalSession session,
                           @Arg(desc = "Which placement type to use")
-                          PlacementType placementType) {
-        placementImpl(actor, session, new Placement(placementType));
+                          PlacementType placementType,
+                          @Arg(desc = "number of times to apply the offset", def = "1")
+                          int multiplier,
+                          @Arg(desc = "How much to offset from it placement to use", def = Offset.ZERO)
+                          @Offset
+                          BlockVector3 offset) {
+        offset = offset.multiply(multiplier);
+        placementImpl(actor, session, new Placement(placementType, offset));
     }
 
     @Command(

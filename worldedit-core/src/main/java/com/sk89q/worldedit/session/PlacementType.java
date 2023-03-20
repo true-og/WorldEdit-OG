@@ -28,7 +28,7 @@ import com.sk89q.worldedit.regions.RegionSelector;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public enum PlacementType {
-    PLAYER("worldedit.toggleplace.player") {
+    PLAYER("worldedit.toggleplace.player", "worldedit.toggleplace.player-offset") {
         @Override
         public BlockVector3 getPlacementPosition(RegionSelector selector, Actor actor) throws IncompleteRegionException
         {
@@ -45,21 +45,21 @@ public enum PlacementType {
         }
     },
 
-    POS1("worldedit.toggleplace.pos1") {
+    POS1("worldedit.toggleplace.pos1", "worldedit.toggleplace.pos1-offset") {
         @Override
         public BlockVector3 getPlacementPosition(RegionSelector selector, Actor actor) throws IncompleteRegionException {
             return selector.getPrimaryPosition();
         }
     },
 
-    MIN("worldedit.toggleplace.min") {
+    MIN("worldedit.toggleplace.min", "worldedit.toggleplace.min-offset") {
         @Override
         public BlockVector3 getPlacementPosition(RegionSelector selector, Actor actor) throws IncompleteRegionException {
             return selector.getRegion().getMinimumPoint();
         }
     },
 
-    MAX("worldedit.toggleplace.max") {
+    MAX("worldedit.toggleplace.max", "worldedit.toggleplace.max-offset") {
         @Override
         public BlockVector3 getPlacementPosition(RegionSelector selector, Actor actor) throws IncompleteRegionException {
             return selector.getRegion().getMaximumPoint();
@@ -67,9 +67,11 @@ public enum PlacementType {
     };
 
     private final String translationKey;
+    private final String translationKeyWithOffset;
 
-    PlacementType(String translationKey) {
+    PlacementType(String translationKey, String translationKeyWithOffset) {
         this.translationKey = translationKey;
+        this.translationKeyWithOffset = translationKeyWithOffset;
     }
 
     public abstract BlockVector3 getPlacementPosition(RegionSelector selector, Actor actor) throws IncompleteRegionException;
@@ -80,5 +82,9 @@ public enum PlacementType {
 
     public String getTranslationKey() {
         return translationKey;
+    }
+
+    public String getTranslationKeyWithOffset() {
+        return translationKeyWithOffset;
     }
 }

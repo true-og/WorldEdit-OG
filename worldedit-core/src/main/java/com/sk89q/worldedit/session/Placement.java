@@ -24,21 +24,29 @@ import com.sk89q.worldedit.extension.platform.Actor;
 import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldedit.regions.RegionSelector;
 import com.sk89q.worldedit.util.formatting.text.Component;
+import com.sk89q.worldedit.util.formatting.text.TextComponent;
 import com.sk89q.worldedit.util.formatting.text.TranslatableComponent;
 
 public class Placement {
     private final PlacementType placementType;
 
-    public Placement(PlacementType placementType) {
+    private final BlockVector3 offset;
+
+    public Placement(PlacementType placementType, BlockVector3 offset) {
         this.placementType = placementType;
+        this.offset = offset;
     }
 
     public PlacementType getPlacementType() {
         return placementType;
     }
 
+    public BlockVector3 getOffset() {
+        return offset;
+    }
+
     public BlockVector3 getPlacementPosition(RegionSelector selector, Actor actor) throws IncompleteRegionException {
-        return placementType.getPlacementPosition(selector, actor);
+        return placementType.getPlacementPosition(selector, actor).add(offset);
     }
 
     public boolean canUseActor(Actor actor) {
@@ -46,6 +54,15 @@ public class Placement {
     }
 
     public Component getInfo() {
-        return TranslatableComponent.of(placementType.getTranslationKey());
+        if (offset.equals(BlockVector3.ZERO)) {
+            return TranslatableComponent.of(placementType.getTranslationKey());
+        } else {
+            return TranslatableComponent.of(
+                    placementType.getTranslationKeyWithOffset(),
+                    TextComponent.of(offset.getX()),
+                    TextComponent.of(offset.getY()),
+                    TextComponent.of(offset.getZ())
+            );
+        }
     }
 }

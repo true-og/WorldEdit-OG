@@ -214,7 +214,7 @@ public class SessionManager {
 
         // Force non-locatable actors to use placeAtPos1
         if (!(owner instanceof Locatable)) {
-            session.setPlacement(new Placement(PlacementType.POS1));
+            session.setPlacement(new Placement(PlacementType.POS1, BlockVector3.ZERO));
         }
 
         return session;

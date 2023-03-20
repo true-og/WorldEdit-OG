@@ -95,7 +95,7 @@ public class LocalSession {
 
     // Session related
     private transient RegionSelector selector = new CuboidRegionSelector();
-    private transient Placement placement = new Placement(PlacementType.PLAYER);
+    private transient Placement placement = new Placement(PlacementType.PLAYER, BlockVector3.ZERO);
     private final transient LinkedList<EditSession> history = new LinkedList<>();
     private transient int historyPointer = 0;
     private transient ClipboardHolder clipboard;
@@ -574,7 +574,7 @@ public class LocalSession {
 
     @Deprecated
     public void setPlaceAtPos1(boolean placeAtPos1) {
-        this.placement = new Placement(placeAtPos1 ? PlacementType.POS1 : PlacementType.PLAYER);
+        this.placement = new Placement(placeAtPos1 ? PlacementType.POS1 : PlacementType.PLAYER, BlockVector3.ZERO);
     }
 
     @Deprecated
@@ -590,9 +590,9 @@ public class LocalSession {
     @Deprecated
     public boolean togglePlacementPosition() {
         if (this.placement.getPlacementType() == PlacementType.POS1) {
-            this.placement = new Placement(PlacementType.PLAYER);
+            this.placement = new Placement(PlacementType.PLAYER, BlockVector3.ZERO);
         } else {
-            this.placement = new Placement(PlacementType.POS1);
+            this.placement = new Placement(PlacementType.POS1, BlockVector3.ZERO);
         }
         return this.placement.getPlacementType() == PlacementType.POS1;
     }
