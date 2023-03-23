@@ -65,4 +65,8 @@ public class Placement {
             );
         }
     }
+
+    public Placement bake(RegionSelector selector, Actor actor) throws IncompleteRegionException {
+        return new Placement(PlacementType.WORLD, getPlacementPosition(selector, actor));
+    }
 }

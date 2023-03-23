@@ -34,12 +34,15 @@ import com.sk89q.worldedit.function.operation.Operation;
 import com.sk89q.worldedit.function.operation.RunContext;
 import com.sk89q.worldedit.internal.expression.Expression;
 import com.sk89q.worldedit.internal.expression.ExpressionException;
+import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldedit.math.Vector3;
 import com.sk89q.worldedit.math.transform.Identity;
 import com.sk89q.worldedit.math.transform.SimpleTransform;
 import com.sk89q.worldedit.math.transform.Transform;
 import com.sk89q.worldedit.regions.NullRegion;
 import com.sk89q.worldedit.regions.Region;
+import com.sk89q.worldedit.session.Placement;
+import com.sk89q.worldedit.session.PlacementType;
 import com.sk89q.worldedit.util.formatting.text.Component;
 import com.sk89q.worldedit.util.formatting.text.TextComponent;
 import com.sk89q.worldedit.util.formatting.text.TranslatableComponent;
@@ -54,7 +57,7 @@ public class Deform implements Contextual<Operation> {
     private Region region;
     private final Expression expression;
     private Mode mode;
-    private Vector3 offset = Vector3.ZERO;
+    Placement placement;
     private boolean useClipboard;
 
     public Deform(String expression) {
@@ -80,6 +83,17 @@ public class Deform implements Contextual<Operation> {
         this.region = region;
         this.mode = mode;
     }
+
+    public Deform(Placement placement, String expression, Mode mode) {
+        checkNotNull(mode, "mode");
+        checkNotNull(expression, "expression");
+
+        this.placement = placement;
+        this.expression = Expression.compile(expression, "x", "y", "z");
+        this.expression.optimize();
+        this.mode = mode;
+    }
+
 
     public Extent getDestination() {
         return destination;
@@ -108,21 +122,17 @@ public class Deform implements Contextual<Operation> {
         this.mode = mode;
     }
 
-    public boolean getUseClipboard() {
-        return useClipboard;
-    }
-
-    public void setUseClipboard(boolean useClipboard) {
-        this.useClipboard = useClipboard;
-    }
-
+    @Deprecated
     public Vector3 getOffset() {
-        return offset;
+        if (this.placement.getPlacementType() != PlacementType.WORLD) {
+            throw new IllegalStateException("Deform.getOffset is deprecated and only supported after using setOffset.");
+        }
+        return placement.getOffset().toVector3();
     }
 
     public void setOffset(Vector3 offset) {
         checkNotNull(offset, "offset");
-        this.offset = offset;
+        this.placement = new Placement(PlacementType.WORLD, offset.toBlockPoint());
     }
 
     @Override
@@ -176,10 +186,13 @@ public class Deform implements Contextual<Operation> {
 
                 final Vector3 min = region.getMinimumPoint().toVector3();
                 final Vector3 max = region.getMaximumPoint().toVector3();
-                final Transform outputTransform = createTransform(min, max, Deform.this.offset);
 
                 final LocalSession session = context.getSession();
                 final EditSession editSession = (EditSession) context.getDestination();
+
+                // TODO: deal with session == null
+                final BlockVector3 placement = Deform.this.placement.getPlacementPosition(session.getRegionSelector(editSession.getWorld()), editSession.getActor());
+                final Transform outputTransform = createTransform(min, max, placement.toVector3());
 
                 final InputExtent inputExtent;
                 final Transform inputTransform;

@@ -432,6 +432,16 @@ public class EditSession implements Extent, AutoCloseable {
     }
 
     /**
+     * Get the actor associated with this EditSession.
+     *
+     * @return the actor
+     */
+    @Nullable
+    public Actor getActor() {
+        return actor;
+    }
+
+    /**
      * Get the underlying {@link ChangeSet}.
      *
      * @return the change set

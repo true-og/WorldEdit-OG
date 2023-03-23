@@ -61,11 +61,15 @@ import com.sk89q.worldedit.function.mask.Mask;
 import com.sk89q.worldedit.function.operation.Operation;
 import com.sk89q.worldedit.function.pattern.Pattern;
 import com.sk89q.worldedit.internal.annotation.ClipboardMask;
+import com.sk89q.worldedit.internal.annotation.Selection;
 import com.sk89q.worldedit.internal.annotation.VertHeight;
 import com.sk89q.worldedit.math.BlockVector3;
+import com.sk89q.worldedit.math.Vector3;
+import com.sk89q.worldedit.regions.Region;
 import com.sk89q.worldedit.regions.factory.CylinderRegionFactory;
 import com.sk89q.worldedit.regions.factory.RegionFactory;
 import com.sk89q.worldedit.session.ClipboardHolder;
+import com.sk89q.worldedit.session.Placement;
 import com.sk89q.worldedit.session.request.RequestExtent;
 import com.sk89q.worldedit.util.HandSide;
 import com.sk89q.worldedit.util.TreeGenerator;
@@ -505,14 +509,35 @@ public class BrushCommands {
                            boolean usePlacement,
                        @Switch(name = 'l', desc = "Fetch from the clipboard instead of the world")
                            boolean useClipboard) throws WorldEditException {
-        Deform deform = new Deform(expression);
-        if (useRawCoords) {
-            deform.setMode(Deform.Mode.RAW_COORD);
-        } else if (usePlacement) {
-            deform.setMode(Deform.Mode.OFFSET);
-            deform.setOffset(localSession.getPlacementPosition(player).toVector3());
+        Placement placement = localSession.getPlacement();
+
+        // bake placement
+        switch (placement.getPlacementType()) {
+            case PLAYER: // Shouldn't be baked, because people can just use "//placement here" instead
+            case WORLD: // Doesn't need to be baked
+                break;
+
+            case POS1:
+            case MIN:
+            case MAX:
+                placement = placement.bake(localSession.getRegionSelector(player.getWorld()), player);
+                break;
+
+            default:
+                throw new IllegalStateException("PlacementType " + placement.getPlacementType() + " not implemented");
         }
-        deform.setUseClipboard(useClipboard);
+
+        final Deform.Mode mode;
+        if (useRawCoords) {
+            mode = Deform.Mode.RAW_COORD;
+        } else if (usePlacement) {
+            mode = Deform.Mode.OFFSET;
+        } else {
+            mode = Deform.Mode.UNIT_CUBE;
+        }
+
+        final Deform deform = new Deform(placement, expression, mode);
+
         setOperationBasedBrush(player, localSession, radius,
             deform, shape, "worldedit.brush.deform");
     }
