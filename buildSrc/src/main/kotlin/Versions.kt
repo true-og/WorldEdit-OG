@@ -8,7 +8,7 @@ object Versions {
     const val JUNIT = "5.8.1"
     const val MOCKITO = "4.3.1"
     const val FAST_UTIL = "8.5.9"
-    const val GUAVA = "31.1-jre"
+    const val GUAVA = "32.1.3-jre"
     const val GSON = "2.10"
     const val LOG4J = "2.19.0"
     const val LIN_BUS = "0.1.0-SNAPSHOT"

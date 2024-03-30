@@ -1,7 +1,7 @@
 import japicmp.accept.AcceptingSetupRule
 import japicmp.accept.BinaryCompatRule
 import me.champeau.gradle.japicmp.JapicmpTask
-import org.gradle.internal.resolve.ModuleVersionNotFoundException
+import java.net.URI
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.util.*
@@ -14,7 +14,41 @@ plugins {
 repositories {
     maven {
         name = "EngineHub Repository (Releases Only)"
-        url = uri("https://maven.enginehub.org/artifactory/libs-release-local/")
+        url = URI.create("https://maven.enginehub.org/artifactory/libs-release-local/")
+        mavenContent {
+            releasesOnly()
+        }
+    }
+    maven {
+        name = "EngineHub Repository (External Releases Only)"
+        url = URI.create("https://maven.enginehub.org/artifactory/ext-release-local/")
+        mavenContent {
+            releasesOnly()
+            includeGroupAndSubgroups("com.sk89q.lib")
+        }
+    }
+    maven {
+        name = "EngineHub Repository (Snapshots Only)"
+        url = URI.create("https://maven.enginehub.org/artifactory/libs-snapshot-local/")
+        mavenContent {
+            snapshotsOnly()
+            includeGroupAndSubgroups("org.enginehub.lin-bus")
+        }
+    }
+    maven {
+        name = "EngineHub Repository (PaperMC Proxy)"
+        url = URI.create("https://maven.enginehub.org/artifactory/papermc-proxy-cache/")
+        mavenContent {
+            includeGroupAndSubgroups("io.papermc")
+            includeGroupAndSubgroups("net.md-5")
+        }
+    }
+    maven {
+        name = "Fabric"
+        url = uri("https://maven.fabricmc.net/")
+        content {
+            includeGroupAndSubgroups("net.fabricmc")
+        }
     }
     maven {
         name = "EngineHub Repository (Snapshots Only)"
@@ -44,7 +78,8 @@ tasks.check {
 // Pull the version before our current version.
 val baseVersion = "(,${rootProject.version.toString().substringBefore("-SNAPSHOT")}["
 for (projectFragment in listOf("bukkit", "cli", "core", "fabric", "forge", "sponge")) {
-    val capitalizedFragment = projectFragment.capitalize(Locale.ROOT)
+    val capitalizedFragment =
+        projectFragment.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.ROOT) else it.toString() }
     val proj = project(":worldedit-$projectFragment")
     evaluationDependsOn(proj.path)
 
@@ -64,15 +99,46 @@ for (projectFragment in listOf("bukkit", "cli", "core", "fabric", "forge", "spon
         dependsOn(resetChangeFileTask)
     }
 
-    val conf = configurations.create("${projectFragment}OldJar") {
-        isCanBeResolved = true
+    val baseConf = configurations.dependencyScope("${projectFragment}OldJar") {
+    }
+    val apiConf = configurations.resolvable("${projectFragment}OldJarApi") {
+        extendsFrom(baseConf.get())
+        attributes {
+            attribute(
+                TargetJvmEnvironment.TARGET_JVM_ENVIRONMENT_ATTRIBUTE,
+                objects.named(TargetJvmEnvironment.STANDARD_JVM)
+            )
+            attribute(
+                Usage.USAGE_ATTRIBUTE,
+                objects.named(Usage.JAVA_API)
+            )
+        }
+    }
+    val runtimeConf = configurations.resolvable("${projectFragment}OldJarRuntime") {
+        extendsFrom(baseConf.get())
+        attributes {
+            attribute(
+                TargetJvmEnvironment.TARGET_JVM_ENVIRONMENT_ATTRIBUTE,
+                objects.named(TargetJvmEnvironment.STANDARD_JVM)
+            )
+            attribute(
+                Usage.USAGE_ATTRIBUTE,
+                objects.named(Usage.JAVA_RUNTIME)
+            )
+        }
     }
     val projPublication = proj.the<PublishingExtension>().publications.getByName<MavenPublication>("maven")
-    conf.dependencies.add(
-        dependencies.create("${projPublication.groupId}:${projPublication.artifactId}:$baseVersion").apply {
-            (this as? ModuleDependency)?.isTransitive = false
-        }
-    )
+    baseConf.configure {
+        dependencies.add(
+            project.dependencies.create("${projPublication.groupId}:${projPublication.artifactId}:$baseVersion")
+        )
+        // Temporarily necessary until Mojang updates their Guava
+        dependencyConstraints.add(
+            project.dependencies.constraints.create("com.google.guava:guava:${Versions.GUAVA}!!").apply {
+                because("Mojang provides Guava")
+            }
+        )
+    }
     val checkApi = tasks.register<JapicmpTask>("check${capitalizedFragment}ApiCompatibility") {
         group = "API Compatibility"
         description = "Check API compatibility for $capitalizedFragment API"
@@ -86,26 +152,23 @@ for (projectFragment in listOf("bukkit", "cli", "core", "fabric", "forge", "spon
             reportName.set("api-compatibility-$projectFragment.html")
         }
 
-        onlyIf {
-            // Only check if we have a jar to compare against
-            try {
-                conf.resolvedConfiguration.rethrowFailure()
-                true
-            } catch (e: ResolveException) {
-                if (e.cause is ModuleVersionNotFoundException) {
-                    it.logger.warn("Skipping check for $projectFragment API compatibility because there is no jar to compare against")
-                    false
-                } else {
-                    throw e
+        oldClasspath.from(apiConf, runtimeConf)
+        newClasspath.from(
+            proj.configurations.named("compileClasspath").get().incoming.artifactView {
+                attributes {
+                    attribute(LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE, objects.named(LibraryElements.JAR))
                 }
-            }
-        }
-
-        oldClasspath.from(conf)
-        newClasspath.from(proj.tasks.named("jar"))
+            }.files,
+            proj.tasks.named(
+                when (projectFragment) {
+                    "fabric" -> "remapJar"
+                    "forge" -> "reobfJar"
+                    else -> "jar"
+                }
+            )
+        )
         onlyModified.set(false)
         failOnModification.set(false) // report does the failing (so we can accept)
-        ignoreMissingClasses.set(true)
 
         // Internals are not API
         packageExcludes.add("com.sk89q.worldedit*.internal*")
@@ -125,15 +188,16 @@ tasks.named<JapicmpTask>("checkCoreApiCompatibility") {
     // Commands are not API
     packageExcludes.add("com.sk89q.worldedit.command*")
 }
+
+dependencies {
+    "bukkitOldJar"("io.papermc.paper:paper-api:1.20.1-R0.1-SNAPSHOT")
+}
 tasks.named<JapicmpTask>("checkBukkitApiCompatibility") {
     // Internal Adapters are not API
     packageExcludes.add("com.sk89q.worldedit.bukkit.adapter*")
 }
-tasks.named<JapicmpTask>("checkFabricApiCompatibility") {
-    // Need to check against the reobf JAR
-    newClasspath.setFrom(project(":worldedit-fabric").tasks.named("remapJar"))
-}
-tasks.named<JapicmpTask>("checkForgeApiCompatibility") {
-    // Need to check against the reobf JAR
-    newClasspath.builtBy(project(":worldedit-forge").tasks.named("reobfJar"))
+
+tasks.named<JapicmpTask>("checkSpongeApiCompatibility") {
+    // POM is broken
+    ignoreMissingClasses.set(true)
 }
