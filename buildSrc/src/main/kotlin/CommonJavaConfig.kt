@@ -19,7 +19,7 @@ fun Project.applyCommonJavaConfiguration(sourcesJar: Boolean, javaRelease: Int =
 
     tasks
         .withType<JavaCompile>()
-        .matching { it.name == "compileJava" || it.name == "compileTestJava" }
+        .matching { it.name == "compileJava" }
         .configureEach {
             val disabledLint = listOf(
                 "processing", "path", "fallthrough", "serial"
@@ -34,10 +34,6 @@ fun Project.applyCommonJavaConfiguration(sourcesJar: Boolean, javaRelease: Int =
     configure<CheckstyleExtension> {
         configFile = rootProject.file("config/checkstyle/checkstyle.xml")
         toolVersion = "9.1"
-    }
-
-    tasks.withType<Test>().configureEach {
-        useJUnitPlatform()
     }
 
     dependencies {

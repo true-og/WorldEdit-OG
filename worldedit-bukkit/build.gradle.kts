@@ -19,7 +19,6 @@ val localImplementation = configurations.create("localImplementation") {
     isCanBeResolved = false
 }
 configurations["compileOnly"].extendsFrom(localImplementation)
-configurations["testImplementation"].extendsFrom(localImplementation)
 
 val adapters = configurations.create("adapters") {
     description = "Adapters to include in the JAR"
@@ -34,9 +33,7 @@ val adapters = configurations.create("adapters") {
 dependencies {
     "api"(project(":worldedit-core"))
     "api"(project(":worldedit-libs:bukkit"))
-    // Technically this is api, but everyone should already have some form of the bukkit API
-    // Avoid pulling in another one, especially one so outdated.
-    "localImplementation"("org.spigotmc:spigot-api:1.17-R0.1-SNAPSHOT") {
+    "localImplementation"("org.spigotmc:spigot-api:1.19.4-R0.1-SNAPSHOT") {
         exclude("junit", "junit")
     }
 
@@ -46,7 +43,7 @@ dependencies {
     "localImplementation"("org.apache.logging.log4j:log4j-api")
 
     "compileOnly"("org.jetbrains:annotations:20.1.0")
-    "compileOnly"("io.papermc.paper:paper-api:1.17-R0.1-SNAPSHOT") {
+    "compileOnly"("io.papermc.paper:paper-api:1.19.4-R0.1-SNAPSHOT") {
         exclude("org.slf4j", "slf4j-api")
         exclude("junit", "junit")
     }
@@ -54,7 +51,6 @@ dependencies {
     "compileOnly"("com.sk89q:dummypermscompat:1.10")
     "implementation"("org.bstats:bstats-bukkit:2.2.1")
     "implementation"("it.unimi.dsi:fastutil")
-    "testImplementation"("org.mockito:mockito-core:1.9.0-rc1")
 
     project.project(":worldedit-bukkit:adapters").subprojects.forEach {
         "adapters"(project(it.path))
