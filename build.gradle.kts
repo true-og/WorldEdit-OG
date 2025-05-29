@@ -1,4 +1,7 @@
 import org.ajoberstar.grgit.Grgit
+import org.gradle.api.plugins.JavaPluginExtension
+import org.gradle.kotlin.dsl.*
+import org.gradle.testing.jacoco.tasks.JacocoReport
 
 // needed for fabric to know where FF executor is....
 buildscript {
@@ -18,67 +21,69 @@ plugins {
     jacoco
 }
 
-if (!project.hasProperty("gitCommitHash")) {
-    apply(plugin = "org.ajoberstar.grgit")
-    ext["gitCommitHash"] = try {
-        extensions.getByName<Grgit>("grgit").head()?.abbreviatedId
-    } catch (e: Exception) {
-        logger.warn("Error getting commit hash", e)
-
-        "no.git.id"
-    }
-}
-
 // Work around https://github.com/gradle/gradle/issues/4823
 subprojects {
-    if (buildscript.sourceFile?.extension?.toLowerCase() == "kts"
-        && parent != rootProject) {
-        generateSequence(parent) { project -> project.parent.takeIf { it != rootProject } }
+    // `lowercase()` replaces deprecated `toLowerCase()`
+    if (buildscript.sourceFile?.extension?.lowercase() == "kts" && parent != rootProject) {
+        generateSequence(parent) { it.parent.takeIf { p -> p != rootProject } }
             .forEach { evaluationDependsOn(it.path) }
     }
 }
 
-logger.lifecycle("""
-*******************************************
- You are building WorldEdit!
+logger.lifecycle(
+    """
+    *******************************************
+     You are building WorldEdit!
 
- If you encounter trouble:
- 1) Read COMPILING.md if you haven't yet
- 2) Try running 'build' in a separate Gradle run
- 3) Use gradlew and not gradle
- 4) If you still need help, ask on Discord! https://discord.gg/enginehub
+     If you encounter trouble:
+       1) Read COMPILING.md if you haven't yet
+       2) Try running 'build' in a separate Gradle run
+       3) Use ./gradlew (not the system gradle)
+       4) Need help? Discord → https://discord.gg/enginehub
 
- Output files will be in [subproject]/build/libs
-*******************************************
-""")
+     Output jars land in  [sub-project]/build/libs
+    *******************************************
+    """.trimIndent()
+)
 
 applyCommonConfiguration()
 applyRootArtifactoryConfig()
 
 val totalReport = tasks.register<JacocoReport>("jacocoTotalReport") {
-    for (proj in subprojects) {
+    subprojects.forEach { proj ->
         proj.apply(plugin = "jacoco")
         proj.plugins.withId("java") {
+            val buildDirFile = proj.layout.buildDirectory.asFile.get()
+            // collect *.exec files under “…/jacoco/”
             executionData(
-                    fileTree(proj.buildDir.absolutePath).include("**/jacoco/*.exec")
+                proj.fileTree(buildDirFile).include("**/jacoco/*.exec")
             )
-            sourceSets(proj.the<JavaPluginConvention>().sourceSets["main"])
+
+            // replace deprecated JavaPluginConvention with JavaPluginExtension
+            val mainSourceSet = proj.extensions
+                .getByType<JavaPluginExtension>()
+                .sourceSets
+                .getByName("main")
+
+            sourceSets(mainSourceSet)
+            // new report API (required / outputLocation)
             reports {
-                xml.isEnabled = true
-                xml.destination = rootProject.buildDir.resolve("reports/jacoco/report.xml")
-                html.isEnabled = true
+                xml.required.set(true)
+                xml.outputLocation.set(
+                    rootProject.layout.buildDirectory.file("reports/jacoco/report.xml")
+                )
+                html.required.set(true) // everything goes in build/reports/jacoco by default
             }
         }
     }
 }
 afterEvaluate {
     totalReport.configure {
-        classDirectories.setFrom(classDirectories.files.map {
-            fileTree(it).apply {
-                exclude("**/*AutoValue_*")
-                exclude("**/*Registration.*")
-            }
-        })
+        classDirectories.setFrom(
+            classDirectories.files.map { fileTree(it) {
+                exclude("**/*AutoValue_*", "**/*Registration.*")
+            }}
+        )
     }
 }
 

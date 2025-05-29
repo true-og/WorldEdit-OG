@@ -3,13 +3,15 @@ import io.papermc.paperweight.userdev.attribute.Obfuscation
 
 plugins {
     `java-library`
+	 id("io.papermc.paperweight.userdev") version "2.0.0-beta.17"
 }
 
 applyPlatformAndCoreConfiguration()
 applyShadowConfiguration()
 
 repositories {
-    maven { url = uri("https://hub.spigotmc.org/nexus/content/groups/public") }
+	mavenCentral()
+	maven { url = uri("https://hub.spigotmc.org/nexus/content/groups/public") }
     maven { url = uri("https://repo.papermc.io/repository/maven-public/") }
 }
 
@@ -33,26 +35,17 @@ val adapters = configurations.create("adapters") {
 dependencies {
     "api"(project(":worldedit-core"))
     "api"(project(":worldedit-libs:bukkit"))
-    "localImplementation"("org.spigotmc:spigot-api:1.19.4-R0.1-SNAPSHOT") {
-        exclude("junit", "junit")
-    }
-
+    paperweight.paperDevBundle("1.19.4-R0.1-SNAPSHOT")
     "localImplementation"(platform("org.apache.logging.log4j:log4j-bom:${Versions.LOG4J}") {
         because("Spigot provides Log4J (sort of, not in API, implicitly part of server)")
     })
     "localImplementation"("org.apache.logging.log4j:log4j-api")
-
     "compileOnly"("org.jetbrains:annotations:20.1.0")
-    "compileOnly"("io.papermc.paper:paper-api:1.19.4-R0.1-SNAPSHOT") {
-        exclude("org.slf4j", "slf4j-api")
-        exclude("junit", "junit")
-    }
     "implementation"("io.papermc:paperlib:1.0.7")
     "compileOnly"("com.sk89q:dummypermscompat:1.10")
     "implementation"("org.bstats:bstats-bukkit:2.2.1")
     "implementation"("it.unimi.dsi:fastutil")
-
-    project.project(":worldedit-bukkit:adapters").subprojects.forEach {
+	project.project(":worldedit-bukkit:adapters").subprojects.forEach {
         "adapters"(project(it.path))
     }
 }

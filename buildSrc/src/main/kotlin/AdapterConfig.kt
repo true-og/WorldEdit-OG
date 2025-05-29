@@ -9,7 +9,6 @@ fun Project.applyPaperweightAdapterConfiguration() {
     apply(plugin = "java-library")
     applyCommonJavaConfiguration(
         sourcesJar = true,
-        banSlf4j = false,
     )
     apply(plugin = "io.papermc.paperweight.userdev")
 

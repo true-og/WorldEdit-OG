@@ -19,10 +19,9 @@ fun Project.applyPlatformAndCoreConfiguration(javaRelease: Int = 8) {
     applyCommonJavaConfiguration(
         sourcesJar = name in setOf("worldedit-core", "worldedit-bukkit", "worldedit-fabric"),
         javaRelease = javaRelease,
-        banSlf4j = name !in setOf("worldedit-fabric"),
     )
 
-    ext["internalVersion"] = "$version+${rootProject.ext["gitCommitHash"]}"
+    ext["internalVersion"] = "$version"
 
     configure<PublishingExtension> {
         publications {

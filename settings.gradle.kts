@@ -2,7 +2,14 @@ rootProject.name = "worldedit"
 
 include("worldedit-libs")
 
-listOf("legacy", "1.18.2", "1.19", "1.19.4").forEach {
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        maven("https://repo.papermc.io/repository/maven-public/")
+    }
+}
+
+listOf("1.19.4").forEach {
     include("worldedit-bukkit:adapters:adapter-$it")
 }
 

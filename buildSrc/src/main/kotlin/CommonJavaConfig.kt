@@ -2,16 +2,14 @@ import org.gradle.api.Project
 import org.gradle.api.plugins.JavaPluginExtension
 import org.gradle.api.plugins.quality.CheckstyleExtension
 import org.gradle.api.tasks.compile.JavaCompile
-import org.gradle.api.tasks.javadoc.Javadoc
 import org.gradle.api.tasks.testing.Test
-import org.gradle.external.javadoc.StandardJavadocDocletOptions
 import org.gradle.kotlin.dsl.apply
 import org.gradle.kotlin.dsl.configure
 import org.gradle.kotlin.dsl.dependencies
 import org.gradle.kotlin.dsl.get
 import org.gradle.kotlin.dsl.withType
 
-fun Project.applyCommonJavaConfiguration(sourcesJar: Boolean, javaRelease: Int = 8, banSlf4j: Boolean = true) {
+fun Project.applyCommonJavaConfiguration(sourcesJar: Boolean, javaRelease: Int = 8) {
     applyCommonConfiguration()
     apply(plugin = "eclipse")
     apply(plugin = "idea")
@@ -45,34 +43,10 @@ fun Project.applyCommonJavaConfiguration(sourcesJar: Boolean, javaRelease: Int =
         "testRuntimeOnly"("org.junit.jupiter:junit-jupiter-engine:${Versions.JUNIT}")
     }
 
-    // Java 8 turns on doclint which we fail
-    tasks.withType<Javadoc>().configureEach {
-        options.encoding = "UTF-8"
-        (options as StandardJavadocDocletOptions).apply {
-            addStringOption("Xdoclint:none", "-quiet")
-            tags(
-                "apiNote:a:API Note:",
-                "implSpec:a:Implementation Requirements:",
-                "implNote:a:Implementation Note:"
-            )
-        }
-    }
-
     configure<JavaPluginExtension> {
         disableAutoTargetJvm()
-        withJavadocJar()
         if (sourcesJar) {
             withSourcesJar()
-        }
-    }
-
-    if (banSlf4j) {
-        configurations["compileClasspath"].apply {
-            resolutionStrategy.componentSelection {
-                withModule("org.slf4j:slf4j-api") {
-                    reject("No SLF4J allowed on compile classpath")
-                }
-            }
         }
     }
 

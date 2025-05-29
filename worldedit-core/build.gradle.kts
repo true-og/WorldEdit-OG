@@ -1,5 +1,6 @@
 import org.cadixdev.gradle.licenser.LicenseExtension
 import org.gradle.plugins.ide.idea.model.IdeaModel
+import org.gradle.api.file.Directory
 
 plugins {
     `java-library`
@@ -41,7 +42,6 @@ dependencies {
     "implementation"("com.google.guava:guava")
     "compileOnlyApi"("com.google.code.findbugs:jsr305:1.3.9")
     "implementation"("com.google.code.gson:gson")
-
     "implementation"("org.apache.logging.log4j:log4j-api:${Versions.LOG4J}") {
         because("Mojang provides Log4J")
     }
@@ -75,7 +75,10 @@ tasks.withType<JavaCompile>().configureEach {
 
 tasks.named<AntlrTask>("generateGrammarSource").configure {
     val pkg = "com.sk89q.worldedit.antlr"
-    outputDirectory = file("build/generated-src/antlr/main/${pkg.replace('.', '/')}")
+    outputDirectory = layout.buildDirectory
+        .dir("generated-src/antlr/main/${pkg.replace('.', '/')}")
+        .get()
+        .asFile
     arguments = listOf(
         "-visitor", "-package", pkg,
         "-Xexact-output-dir"
@@ -88,9 +91,11 @@ tasks.named("sourcesJar") {
 
 configure<LicenseExtension> {
     exclude {
-        it.file.startsWith(project.buildDir)
+        val buildRoot: Directory = layout.buildDirectory.get()
+        it.file.startsWith(buildRoot.asFile)
     }
 }
+
 tasks.withType<Checkstyle>().configureEach {
     exclude("com/sk89q/worldedit/antlr/**/*.java")
 }
@@ -118,12 +123,5 @@ tasks.named<Copy>("processResources") {
             "i18n.zip"
         }
         into("lang")
-    }
-}
-
-configure<PublishingExtension> {
-    publications.named<MavenPublication>("maven") {
-        artifactId = the<BasePluginConvention>().archivesBaseName
-        from(components["java"])
     }
 }
